@@ -1,3 +1,4 @@
+package lezione1l;
 public class es1_6 {
     public static boolean scan(String s)
     {
