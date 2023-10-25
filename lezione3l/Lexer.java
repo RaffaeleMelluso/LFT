@@ -1,4 +1,4 @@
-package lezione2l;
+package lezione3l;
 
 import java.io.*; 
 import java.util.*;
@@ -10,9 +10,24 @@ public class Lexer {
     
     private void readch(BufferedReader br) {
         try {
+            
             peek = (char) br.read();
         } catch (IOException exc) {
             peek = (char) -1; // ERROR
+        }
+    }
+    private void setcursor(BufferedReader br){
+        try {
+            br.mark(1);
+        } catch (IOException exc) {
+            peek = (char) -1; // error
+        }
+    }
+    private void resetch(BufferedReader br){
+        try {
+            br.reset();
+        } catch (IOException exc) {
+            peek = (char) -1; // error
         }
     }
 
@@ -53,9 +68,38 @@ public class Lexer {
             case '*':
                 peek = ' ';
                 return Token.mult;
-            case '/':
-                peek = ' ';
-                return Token.div;
+            case '/':  //controlla anche commenti
+                
+                readch(br);
+                if(peek=='*') //caso commento lungo /* */
+                {
+                    readch(br);
+                    while(peek!='*')
+                    {
+                        readch(br);
+                    }
+                    if(peek=='/')
+                        return (Token) null;
+
+                }
+                else if(peek=='/') //caso commento corto
+                {
+                    while(peek!='\n' || peek==(char)-1)
+                        readch(br);
+                    if(peek==(char)-1)
+                        return new Token(Tag.EOF);
+                    else
+                    {
+                        peek=' ';
+                    }
+                        
+                }
+                else
+                {
+                    peek = ' ';
+                    return Token.div;
+                }
+                
             case ';':
                 peek = ' ';
                 return Token.semicolon;
@@ -149,8 +193,11 @@ public class Lexer {
             default:
                 if (Character.isLetter(peek) || peek=='_') {
                     s="";
+                    int c=0;
                     while(Character.isLetter(peek) || Character.isDigit(peek) || peek=='_')
                     {
+                        if(peek=='_')
+                            c++;
                         s+=peek;
                         readch(br);
                     }
@@ -205,14 +252,14 @@ public class Lexer {
                         peek=' ';
                         return Word.read;
                     }
-                    else if(!Character.isDigit(s.charAt(0)))
+                    else if(!Character.isDigit(s.charAt(0)) && c<s.length())
                     {
                             peek=' ';
                             return new Word(Tag.ID, s);
                     }
                     else
                     {
-                        System.err.println("Erroneous id or keyword"  + s );
+                        System.err.println("Erroneous id or keyword "  + s );
                         return null;   
                     }
 
@@ -244,7 +291,7 @@ public class Lexer {
 		
     public static void main(String[] args) {
         Lexer lex = new Lexer();
-        String path = "lezione2l/lexer.txt"; // il percorso del file da leggere
+        String path = "lezione3l/lexer.txt"; // il percorso del file da leggere
         try {
             BufferedReader br = new BufferedReader(new FileReader(path));
             Token tok;
