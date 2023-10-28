@@ -16,20 +16,6 @@ public class Lexer {
             peek = (char) -1; // ERROR
         }
     }
-    private void setcursor(BufferedReader br){
-        try {
-            br.mark(1);
-        } catch (IOException exc) {
-            peek = (char) -1; // error
-        }
-    }
-    private void resetch(BufferedReader br){
-        try {
-            br.reset();
-        } catch (IOException exc) {
-            peek = (char) -1; // error
-        }
-    }
 
     public Token lexical_scan(BufferedReader br) {
         while (peek == ' ' || peek == '\t' || peek == '\n'  || peek == '\r') {
@@ -69,49 +55,44 @@ public class Lexer {
                 peek = ' ';
                 return Token.mult;
             case '/': 
-					//System.err.println("caso 1");
-					readch(br);
-					
-					if(Character.isLetterOrDigit(peek)){
-							//peek = ' '; 
-							return Token.div;
-						}else{
-								switch (peek){
+				readch(br);	
+				if(Character.isLetter(peek) || Character.isDigit(peek)) //caso divisione
+                    return Token.div;
+                else
+                {
+					switch (peek)
+                    {
 									
-									case '/': 
-											do{
-												readch(br);
-											}while(peek!='\n');
-											break;
-											
-
-									case '*': 
-										
-											do{
-												do{
-													readch(br);
-												}while(peek!='*');
-												
-												readch(br);
-												while(peek=='*')	
-													readch(br);
-											}while(peek!='/');
-
-											break;
-										
-											
-									default: 
-										System.err.println("Erroneous comment"+ peek );
-										return null;
-									
-								}
-								//return Token.div//ERRORE
-								//return Token.semicolon;//ERRORE
-								//while(Character.isLetterOrDigit(peek))
+						case '/':  //commento da singola linea
+							do
+                            {
+								readch(br);
+							}while(peek!='\n' || peek!=(char) -1); 
+                            if(peek==(char) -1) //se un commento è nella riga finale del file termina il programma
+                                return Word.end;
+							break;
+						case '*': //commento da linea multipla
+							do
+                            {
+							    do
+                                {
 									readch(br);
-									return lexical_scan(br);
-								//break;
+								}
+                                while(peek!='*'); //legge caratteri fin quando non trova *
+                                readch(br);
+								while(peek=='*' || peek=='/') // se trova altri caratteri continua a leggere fin quando non incontra un'altro * o un / per indicare il caso di fine commento
+									readch(br);
 							}
+                            while(peek!='/');
+                            break;
+						default: //commento erroneo
+							System.err.println("Comment error"+ peek );
+							return null;
+									
+					}
+                    readch(br);
+					return lexical_scan(br); //chiamata a prossima lettura
+				}
 
                 
             case ';':
