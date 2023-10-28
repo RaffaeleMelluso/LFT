@@ -68,37 +68,51 @@ public class Lexer {
             case '*':
                 peek = ' ';
                 return Token.mult;
-            case '/':  //controlla anche commenti
-                
-                readch(br);
-                if(peek=='*') //caso commento lungo /* */
-                {
-                    readch(br);
-                    while(peek!='*')
-                    {
-                        readch(br);
-                    }
-                    if(peek=='/')
-                        return (Token) null;
+            case '/': 
+					//System.err.println("caso 1");
+					readch(br);
+					
+					if(Character.isLetterOrDigit(peek)){
+							//peek = ' '; 
+							return Token.div;
+						}else{
+								switch (peek){
+									
+									case '/': 
+											do{
+												readch(br);
+											}while(peek!='\n');
+											break;
+											
 
-                }
-                else if(peek=='/') //caso commento corto
-                {
-                    while(peek!='\n' || peek==(char)-1)
-                        readch(br);
-                    if(peek==(char)-1)
-                        return new Token(Tag.EOF);
-                    else
-                    {
-                        peek=' ';
-                    }
-                        
-                }
-                else
-                {
-                    peek = ' ';
-                    return Token.div;
-                }
+									case '*': 
+										
+											do{
+												do{
+													readch(br);
+												}while(peek!='*');
+												
+												readch(br);
+												while(peek=='*')	
+													readch(br);
+											}while(peek!='/');
+
+											break;
+										
+											
+									default: 
+										System.err.println("Erroneous comment"+ peek );
+										return null;
+									
+								}
+								//return Token.div//ERRORE
+								//return Token.semicolon;//ERRORE
+								//while(Character.isLetterOrDigit(peek))
+									readch(br);
+									return lexical_scan(br);
+								//break;
+							}
+
                 
             case ';':
                 peek = ' ';
