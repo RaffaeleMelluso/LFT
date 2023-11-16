@@ -16,7 +16,6 @@ public class Lexer {
             peek = (char) -1; // ERROR
         }
     }
-
     public Token lexical_scan(BufferedReader br) {
         while (peek == ' ' || peek == '\t' || peek == '\n'  || peek == '\r') {
             if (peek == '\n') line++;
@@ -67,24 +66,37 @@ public class Lexer {
 							do
                             {
 								readch(br);
-							}while(peek!='\n' || peek!=(char) -1); 
+							}while(peek!='\n' && peek!=(char) -1); 
                             if(peek==(char) -1) //se un commento è nella riga finale del file termina il programma
-                                return Word.end;
+                                return Word.end; 
 							break;
-						case '*': //commento da linea multipla
-							do
+						case '*': //commento da linea multipla riarrangiamento es 1.5
+                            int state=2;
+							while(peek!=(char) -1 && state!=4 && state>=2)
                             {
-							    do
-                                {
-									readch(br);
-								}
-                                while(peek!='*'); //legge caratteri fin quando non trova *
                                 readch(br);
-								while(peek=='*' || peek=='/') // se trova altri caratteri continua a leggere fin quando non incontra un'altro * o un / per indicare il caso di fine commento
-									readch(br);
-							}
-                            while(peek!='/');
-                            break;
+                                switch (state) {
+                                    case 2:
+                                        if(peek!='*')
+                                            state=2;
+                                        else
+                                            state=3;
+                                    break;
+                                    case 3:
+                                        if(peek=='/')
+                                            state=4;
+                                        else
+                                            state=2;
+                                    break;
+                                }
+                            }
+                            if(state!=4)
+                            {
+                                System.err.println("Comment error"+ peek );
+							    return null;
+                            }
+                            
+                        break;
 						default: //commento erroneo
 							System.err.println("Comment error"+ peek );
 							return null;
@@ -189,67 +201,59 @@ public class Lexer {
                 if (Character.isLetter(peek) || peek=='_') {
                     s="";
                     int c=0;
-                    while(Character.isLetter(peek) || Character.isDigit(peek) || peek=='_')
+                    do 
                     {
                         if(peek=='_')
                             c++;
                         s+=peek;
                         readch(br);
                     }
+                    while(Character.isLetter(peek) || Character.isDigit(peek) || peek=='_');
+                    
                     if(s.equals("assign"))
                     {
-                        peek=' ';
                         return Word.assign;
                     }
                     else if(s.equals("to"))
                     {
-                        peek=' ';
                         return Word.to;
                     }
                     else if(s.equals("if"))
                     {
-                        peek=' ';
                         return Word.iftok;
                     }
                     else if(s.equals("else"))
                     {
-                        peek=' ';
                         return Word.elsetok;
                     }
                     else if(s.equals("do"))
                     {
-                        peek=' ';
                         return Word.dotok;
 
                     }
                     else if(s.equals("for"))
                     {
-                        peek=' ';
                         return Word.fortok;
                     }
                     else if(s.equals("begin"))
                     {
-                        peek=' ';
                         return Word.begin;
                     }
                     else if(s.equals("end"))
                     {
-                        peek=' ';
                         return Word.end;
                     }
                     else if(s.equals("print"))
                     {
-                        peek=' ';
                         return Word.print;
                     }
                     else if(s.equals("read"))
                     {
-                        peek=' ';
                         return Word.read;
                     }
                     else if(!Character.isDigit(s.charAt(0)) && c<s.length())
                     {
-                            peek=' ';
+
                             return new Word(Tag.ID, s);
                     }
                     else
