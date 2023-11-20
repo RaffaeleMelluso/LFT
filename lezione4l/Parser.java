@@ -25,23 +25,40 @@ public class Parser
 	throw new Error("near line " + lex.line + ": " + s);
     }
 
-    void match(int t) {
-	if (look.tag == t) {
-	    if (look.tag != Tag.EOF) move();
-	} else error("syntax error");
+    void match(int t) 
+    {
+        if (look.tag == t) 
+        {
+            if (look.tag != Tag.EOF) 
+                move();
+        } 
+        else error("syntax error");
     }
 
     public void start() {
 	// ... completare ...
-	expr();
-	match(Tag.EOF);
+    if(look==Token.lpt || look.tag==Tag.NUM)
+    {
+        expr();
+        match(Tag.EOF);
+    }
+	else
+        error("No such guide for start");
 	// ... completare ...
     }
 
-    private void expr() {
-	// ... completare ...
-    term();
-    exprp();
+    private void expr() 
+    {
+	    // ... completare ...
+        if(look.tag==Tag.NUM || look==Token.lpt)
+        {
+            term();
+            exprp();
+        }
+        else
+            error("No such guide for expr");
+    
+    
     }
 
     private void exprp() {
@@ -63,9 +80,15 @@ public class Parser
 	}
     }
 
-    private void term() {
-        fact();
-        termp();
+    private void term() 
+    {
+        if(look.tag==Tag.NUM || look==Token.lpt)
+        {
+            fact();
+            termp();
+        }
+        else
+            error("No such guide for term");
         // ... completare ...
     }
 
@@ -96,7 +119,7 @@ public class Parser
                 match(')');
                 break;
             
-            case 19:
+            case Tag.NUM:
                 
                 break;
         }
