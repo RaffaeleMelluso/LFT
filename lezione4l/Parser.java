@@ -2,6 +2,9 @@ package lezione4l;
 
 import java.io.*;
 
+import lezione4l.Tag;
+import lezione4l.Token;
+
 public class Parser 
 {
     private Lexer lex;
@@ -37,7 +40,7 @@ public class Parser
 
     public void start() {
 	// ... completare ...
-    if(look==Token.lpt || look.tag==Tag.NUM)
+    if(look.tag==Token.lpt.tag || look.tag==Tag.NUM)
     {
         expr();
         match(Tag.EOF);
@@ -50,7 +53,7 @@ public class Parser
     private void expr() 
     {
 	    // ... completare ...
-        if(look.tag==Tag.NUM || look==Token.lpt)
+        if(look.tag==Tag.NUM || look.tag==Token.lpt.tag)
         {
             term();
             exprp();
@@ -61,72 +64,100 @@ public class Parser
     
     }
 
-    private void exprp() {
-	switch (look.tag) {
-	case '+':
-        term();
-        exprp();
+    private void exprp() 
+    {
+        switch (look.tag) 
+        {
+            case '+':
+                match(Token.plus.tag);
+                term();
+                exprp();
 
-        break;
-    case '-':
-        term();
-        exprp();
+                break;
+            case '-':
+                match(Token.minus.tag);
+                term();
+                exprp();
 
 
-        break;
-    case -1:
-        break;
-	// ... completare ...
-	}
+                break;
+            case Tag.EOF:
+                break;
+            
+            case ')':
+                break;
+            default:
+                error("No such guide for fact");
+                break;
+            // ... completare ...
+        }
     }
 
     private void term() 
     {
-        if(look.tag==Tag.NUM || look==Token.lpt)
+        if(look.tag==Tag.NUM || look.tag==Token.lpt.tag)
         {
             fact();
-            termp();
-        }
+            termp();       
+         }
         else
             error("No such guide for term");
         // ... completare ...
     }
 
-    private void termp() {
+    private void termp() 
+    {
         switch (look.tag) 
         {
             case '*':
-                term();
-                exprp();
+                match(Token.mult.tag);
+                fact();
+                termp();
 
                 break;
             case '/':
-                term();
-                exprp();
+                match(Token.div.tag);
+                fact();
+                termp();
 
 
                 break;
-            case -1:
+            case Tag.EOF:
+                break;
+            case ')':
+                break;
+            case '+':
+                break;
+            case '-':
+                break;
+            default:
+                error("No such guide for fact");
                 break;
         }
         // ... completare ...
     }
 
-    private void fact() {
-        switch (look.tag) {
+    private void fact() 
+    {
+        switch (look.tag) 
+        {
             case '(':
+                match(Token.lpt.tag);
                 expr();
-                match(')');
+                match(Token.rpt.tag);
                 break;
             
             case Tag.NUM:
-                
+                match(Tag.NUM);
                 break;
+            default:
+                error("No such guide for fact");
         }
         // ... completare ...
     }
 		
-    public static void main(String[] args) {
+    public static void main(String[] args) 
+    {
         Lexer lex = new Lexer();
         String path = "lezione4l/lexer.txt"; // il percorso del file da leggere
         try {
