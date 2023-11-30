@@ -88,28 +88,28 @@ public class Parser
     {
         switch (look.tag) 
         {
-            case Word.assign.tag:
+            case Tag.ASSIGN:
                 match(Word.assign.tag);
                 assignlist();
                 break;
-            case Word.print.tag:
+            case Tag.PRINT:
                 match(Word.print.tag);
                 match(Token.lpt.tag);
                 exprlist();
                 match(Token.rpt.tag);
                 break;
-            case Word.read.tag:
+            case Tag.READ:
                 match(Token.lpt.tag);
                 idlist();
                 match(Token.rpt.tag);
                 break;
             
-            case Word.fortok.tag:
+            case Tag.FOR:
                 match(Word.fortok.tag);
                 match(Token.lpt.tag);
                 A();
                 break;
-            case Word.iftok.tag:
+            case Tag.IF:
                 match(Word.iftok.tag);
                 match(Token.lpt.tag);
                 bexpr();
@@ -117,7 +117,7 @@ public class Parser
                 stat();
                 B();
                 break;
-            case Token.lpg.tag:
+            case '{':
                 match(Token.lpg.tag);
                 statlist();
                 match(Token.rpg.tag);
@@ -138,7 +138,7 @@ public class Parser
                 expr();
                 match(Token.semicolon.tag);
                 bexpr();
-                match(Token.lpt.tag);
+                match(Token.rpt.tag);
                 match(Word.dotok.tag);
                 stat();
                 break;
@@ -291,7 +291,7 @@ public class Parser
             case Tag.NUM:
             case Tag.ID:
                 expr();
-                exprlist();
+                exprlistp();
                 break;
             default:
                 error("No such guide for exprlist");
@@ -315,7 +315,7 @@ public class Parser
         try {
             BufferedReader br = new BufferedReader(new FileReader(path));
             Parser parser = new Parser(lex, br);
-            parser.start();
+            parser.prog();
             System.out.println("Input OK");
             br.close();
         } catch (IOException e) {e.printStackTrace();}

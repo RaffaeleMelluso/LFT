@@ -1,6 +1,5 @@
 package lezione4l;
 
-
 import java.io.*; 
 import java.util.*;
 
@@ -11,12 +10,12 @@ public class Lexer {
     
     private void readch(BufferedReader br) {
         try {
+            
             peek = (char) br.read();
         } catch (IOException exc) {
             peek = (char) -1; // ERROR
         }
     }
-
     public Token lexical_scan(BufferedReader br) {
         while (peek == ' ' || peek == '\t' || peek == '\n'  || peek == '\r') {
             if (peek == '\n') line++;
@@ -54,8 +53,8 @@ public class Lexer {
             case '*':
                 peek = ' ';
                 return Token.mult;
-            case '/':
-                peek = ' ';
+            case '/': 
+				peek = ' ';
                 return Token.div;
             case ';':
                 peek = ' ';
@@ -141,6 +140,18 @@ public class Lexer {
                             + " after = : "  + peek );
                     return null;
                 }
+            case ':':
+                readch(br);
+                if(peek=='=')
+                {
+                    peek=' ';
+                    return Word.init;
+                }
+                else{
+                    System.err.println("Erroneous character"
+                            + " after = : "  + peek );
+                    return null;
+                }
 
 	// ... gestire i casi di || < > <= >= == <> ... //
           
@@ -150,70 +161,65 @@ public class Lexer {
             default:
                 if (Character.isLetter(peek) || peek=='_') {
                     s="";
-                    while(Character.isLetter(peek) || Character.isDigit(peek) || peek=='_')
+                    int c=0;
+                    do 
                     {
+                        if(peek=='_')
+                            c++;
                         s+=peek;
                         readch(br);
                     }
+                    while(Character.isLetter(peek) || Character.isDigit(peek) || peek=='_');
+                    
                     if(s.equals("assign"))
                     {
-                        peek=' ';
                         return Word.assign;
                     }
                     else if(s.equals("to"))
                     {
-                        peek=' ';
                         return Word.to;
                     }
                     else if(s.equals("if"))
                     {
-                        peek=' ';
                         return Word.iftok;
                     }
                     else if(s.equals("else"))
                     {
-                        peek=' ';
                         return Word.elsetok;
                     }
                     else if(s.equals("do"))
                     {
-                        peek=' ';
                         return Word.dotok;
 
                     }
                     else if(s.equals("for"))
                     {
-                        peek=' ';
                         return Word.fortok;
                     }
                     else if(s.equals("begin"))
                     {
-                        peek=' ';
                         return Word.begin;
                     }
                     else if(s.equals("end"))
                     {
-                        peek=' ';
                         return Word.end;
                     }
                     else if(s.equals("print"))
                     {
-                        peek=' ';
                         return Word.print;
                     }
                     else if(s.equals("read"))
                     {
-                        peek=' ';
                         return Word.read;
                     }
-                    else if(!Character.isDigit(s.charAt(0)))
+                    else if(!Character.isDigit(s.charAt(0)) && c<s.length())
                     {
-                            peek=' ';
+
                             return new Word(Tag.ID, s);
                     }
                     else
                     {
-                        System.err.println("Erroneous id or keyword"  + s );
+                        System.err.println("Erroneous id or keyword "  + s );
                         return null;   
                     }
 
@@ -242,7 +248,6 @@ public class Lexer {
                 }
          }
     }
-		
     public static void main(String[] args) {
         Lexer lex = new Lexer();
         String path = "lezione4l/lexer.txt"; // il percorso del file da leggere
