@@ -1,4 +1,4 @@
-package lezione4l;
+package lezione6l;
 
 public class Token {
     public final int tag;
