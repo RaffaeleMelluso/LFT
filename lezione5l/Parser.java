@@ -39,7 +39,7 @@ public class Parser
     }
 
     public void prog() {
-	// ... completare ...
+	
     if(look.tag==Word.assign.tag || look.tag==Word.print.tag || look.tag==Word.read.tag || 
         look.tag==Word.fortok.tag || look.tag==Word.iftok.tag || look.tag==Token.lpg.tag)
     {
@@ -48,12 +48,12 @@ public class Parser
     }
 	else
         error("No such guide for prog");
-	// ... completare ...
+	
     }
 
     private void statlist() 
     {
-	    // ... completare ...
+	    
         if(look.tag==Word.assign.tag || look.tag==Word.print.tag || look.tag==Word.read.tag || 
             look.tag==Word.fortok.tag || look.tag==Word.iftok.tag || look.tag==Token.lpg.tag)
         {
@@ -67,7 +67,7 @@ public class Parser
     }
     private void statlistp() 
     {
-	    // ... completare ...
+	    
         if(look.tag==Token.semicolon.tag)
         {
            match(Token.semicolon.tag);
@@ -126,7 +126,7 @@ public class Parser
             default:
                 error("No such guide for stat");
                 break;
-            // ... completare ...
+            
         }
     }
     private void A()
@@ -183,7 +183,7 @@ public class Parser
         }
         else
             error("No such guide for assignlist");
-        // ... completare ...
+        
     }
     private void assignlistp()
     {
@@ -277,7 +277,7 @@ public class Parser
                 error("No such guide for expr");
                 break;
         }
-        // ... completare ...
+        
     }
 
     private void exprlist() 
@@ -297,7 +297,7 @@ public class Parser
                 error("No such guide for exprlist");
                 break;
         }
-        // ... completare ...
+        
     }
 	private void exprlistp()
     {
