@@ -62,21 +62,23 @@ public class Translator {
         if(look.tag==Word.assign.tag || look.tag==Word.print.tag || look.tag==Word.read.tag || 
             look.tag==Word.fortok.tag || look.tag==Word.iftok.tag || look.tag==Token.lpg.tag)
         {
-           stat();
-           statlistp();
+            lnext_prog = code.newLabel();
+           stat(lnext_prog);
+           statlistp(lnext_prog);
         }
         else
             error("No such guide for statlist");
     
     
     }
-    private void statlistp() 
+    private void statlistp(int lnext_prog) 
     {
         if(look.tag==Token.semicolon.tag)
         {
+           lnext_prog = code.newLabel();
            match(Token.semicolon.tag);
-           stat();
-           statlistp();
+           stat(lnext_prog);
+           statlistp(lnext_prog);
         }
         else if(look.tag==Token.rpg.tag || look.tag==Tag.EOF)
         {
@@ -87,31 +89,36 @@ public class Translator {
     
     
     }
-    public void stat( /* completare */ ) {
+    public void stat(int lnext_prog) {
         switch (look.tag) 
         {
             case Tag.ASSIGN:
+                lnext_prog = code.newLabel();
                 match(Word.assign.tag);
                 assignlist();
                 break;
             case Tag.PRINT:
+                lnext_prog = code.newLabel();
                 match(Word.print.tag);
                 match(Token.lpt.tag);
                 exprlist();
                 match(Token.rpt.tag);
                 break;
             case Tag.READ:
+                lnext_prog = code.newLabel();
                 match(Tag.READ);
                 match('(');
 	            idlist(/* completare */);
                 match(')');
             
             case Tag.FOR:
+                lnext_prog = code.newLabel();
                 match(Word.fortok.tag);
                 match(Token.lpt.tag);
                 A();
                 break;
             case Tag.IF:
+                lnext_prog = code.newLabel();
                 match(Word.iftok.tag);
                 match(Token.lpt.tag);
                 bexpr();
@@ -120,6 +127,7 @@ public class Translator {
                 B();
                 break;
             case '{':
+                lnext_prog = code.newLabel();
                 match(Token.lpg.tag);
                 statlist();
                 match(Token.rpg.tag);
@@ -131,10 +139,11 @@ public class Translator {
             
         }
      }
-     private void A()
+     private void A(int lnext_prog)
      {
          switch (look.tag) {
              case Tag.ID:
+                 lnext_prog = code.newLabel();
                  match(Tag.ID);
                  match(Word.init.tag);
                  expr();
@@ -145,6 +154,7 @@ public class Translator {
                  stat();
                  break;
              case Tag.RELOP:
+                 lnext_prog = code.newLabel();
                  bexpr();
                  match(Token.rpt.tag);
                  match(Word.dotok.tag);
@@ -155,15 +165,17 @@ public class Translator {
                  break;
          }
      }
-     private void B()
+     private void B(int lnext_prog)
      {
          if(look.tag== Word.elsetok.tag)
          {
+             lnext_prog = code.newLabel();
              match(Word.elsetok.tag);
              stat();
              match(Word.end.tag);
          }
          else if(look.tag==Word.end.tag){
+             lnext_prog = code.newLabel();
              match(Word.end.tag);
          }
          else
@@ -171,32 +183,117 @@ public class Translator {
                  
              
      }
-    private void idlist(/* completare */) {
+    private void idlist(int lnext_prog) {
         switch(look.tag) {
 	    case Tag.ID:
+            lnext_prog = code.newLabel();
         	int id_addr = st.lookupAddress(((Word)look).lexeme);
                 if (id_addr==-1) {
                     id_addr = count;
                     st.insert(((Word)look).lexeme,count++);
                 }
                 match(Tag.ID);
-	// ... completare ...
+        default:
+            error("No such guide for idlist");
+        
     	}
     }
+    private void idlistp(int lnext_prog)
+    {
+        if(look.tag==Token.comma.tag)
+        {
+            lnext_prog = code.newLabel();
+            match(Token.comma.tag);
+            match(Tag.ID);
+            idlistp();
+        }
+        else if(look.tag==Token.rpq.tag || look.tag==Token.rpt.tag)
+        {
+            lnext_prog = code.newLabel();
+        }
+        else
+            error("No such guide for idlistp");
+    }
+    private void bexpr(int lnext_prog)
+    {
+        if(look.tag==Tag.RELOP)
+        {
+            lnext_prog = code.newLabel();
+            match(Tag.RELOP);
+            expr();
+            expr();
+        }
+        else
+            error("No such guide for bexpr");
+    }
 
-    private void expr( /* completare */ ) {
+    private void expr( int lnext_prog ) {
         switch(look.tag) {
-	// ... completare ...
+            case '+':
+                lnext_prog = code.newLabel();
+                match(Token.plus.tag);
+                match(Token.lpt.tag);
+                exprlist();
+                match(Token.rpt.tag);
+
+                break;
+            case '*':
+                lnext_prog = code.newLabel();
+                match(Token.mult.tag);
+                match(Token.lpt.tag);
+                exprlist();
+                match(Token.rpt.tag);
+                break;
             case '-':
+                lnext_prog = code.newLabel();
                 match('-');
                 expr();
                 expr();
                 code.emit(OpCode.isub);
                 break;
-	// ... completare ...
+            case '/':
+                lnext_prog = code.newLabel();
+                match(Token.div.tag);
+                expr();
+                expr();
+                break;
+            case Tag.NUM:
+                match(Tag.NUM);
+                break;
+            case Tag.ID:
+                match(Tag.ID);
+                break;
+            default:
+                error("No such guide for expr");
+                break;
         }
     }
-
-// ... completare ...
+    private void exprlist(int lnext_prog) 
+    {
+        switch (look.tag) 
+        {
+            case '+':
+            case '*':
+            case '-':
+            case '/':
+            case Tag.NUM:
+            case Tag.ID:
+                expr();
+                exprlistp();
+                break;
+            default:
+                error("No such guide for exprlist");
+                break;
+        }
+        
+    }
+	private void exprlistp(int lnext_prog)
+    {
+        if(look.tag==Token.comma.tag)
+            match(Token.comma.tag);
+        else if(look.tag==Token.rpt.tag)
+        {}
+        else 
+            error("No such guide for exprlistp");
+    }
 }
-// 
