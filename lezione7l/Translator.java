@@ -62,7 +62,7 @@ public class Translator {
         if(look.tag==Word.assign.tag || look.tag==Word.print.tag || look.tag==Word.read.tag || 
             look.tag==Word.fortok.tag || look.tag==Word.iftok.tag || look.tag==Token.lpg.tag)
         {
-            lnext_prog = code.newLabel();
+           
            stat(lnext_prog);
            statlistp(lnext_prog);
         }
@@ -75,7 +75,7 @@ public class Translator {
     {
         if(look.tag==Token.semicolon.tag)
         {
-           lnext_prog = code.newLabel();
+           
            match(Token.semicolon.tag);
            stat(lnext_prog);
            statlistp(lnext_prog);
@@ -143,7 +143,7 @@ public class Translator {
      {
          switch (look.tag) {
              case Tag.ID:
-                 lnext_prog = code.newLabel();
+                 
                  match(Tag.ID);
                  match(Word.init.tag);
                  expr();
@@ -154,7 +154,7 @@ public class Translator {
                  stat();
                  break;
              case Tag.RELOP:
-                 lnext_prog = code.newLabel();
+                 
                  bexpr();
                  match(Token.rpt.tag);
                  match(Word.dotok.tag);
@@ -169,13 +169,13 @@ public class Translator {
      {
          if(look.tag== Word.elsetok.tag)
          {
-             lnext_prog = code.newLabel();
+             
              match(Word.elsetok.tag);
              stat();
              match(Word.end.tag);
          }
          else if(look.tag==Word.end.tag){
-             lnext_prog = code.newLabel();
+             
              match(Word.end.tag);
          }
          else
@@ -186,7 +186,7 @@ public class Translator {
     private void idlist(int lnext_prog) {
         switch(look.tag) {
 	    case Tag.ID:
-            lnext_prog = code.newLabel();
+            
         	int id_addr = st.lookupAddress(((Word)look).lexeme);
                 if (id_addr==-1) {
                     id_addr = count;
@@ -202,14 +202,14 @@ public class Translator {
     {
         if(look.tag==Token.comma.tag)
         {
-            lnext_prog = code.newLabel();
+           
             match(Token.comma.tag);
             match(Tag.ID);
             idlistp();
         }
         else if(look.tag==Token.rpq.tag || look.tag==Token.rpt.tag)
         {
-            lnext_prog = code.newLabel();
+            
         }
         else
             error("No such guide for idlistp");
@@ -218,7 +218,7 @@ public class Translator {
     {
         if(look.tag==Tag.RELOP)
         {
-            lnext_prog = code.newLabel();
+            
             match(Tag.RELOP);
             expr();
             expr();
@@ -230,7 +230,7 @@ public class Translator {
     private void expr( int lnext_prog ) {
         switch(look.tag) {
             case '+':
-                lnext_prog = code.newLabel();
+                
                 match(Token.plus.tag);
                 match(Token.lpt.tag);
                 exprlist();
@@ -238,21 +238,21 @@ public class Translator {
 
                 break;
             case '*':
-                lnext_prog = code.newLabel();
+                
                 match(Token.mult.tag);
                 match(Token.lpt.tag);
                 exprlist();
                 match(Token.rpt.tag);
                 break;
             case '-':
-                lnext_prog = code.newLabel();
+                
                 match('-');
                 expr();
                 expr();
                 code.emit(OpCode.isub);
                 break;
             case '/':
-                lnext_prog = code.newLabel();
+                
                 match(Token.div.tag);
                 expr();
                 expr();
