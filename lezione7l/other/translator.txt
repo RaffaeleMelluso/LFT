@@ -1,0 +1,2 @@
+assign [10 to x,a]
+[20 to y]

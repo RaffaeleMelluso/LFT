@@ -99,6 +99,7 @@ public class Parser
                 match(Token.rpt.tag);
                 break;
             case Tag.READ:
+                match(Tag.READ);
                 match(Token.lpt.tag);
                 idlist();
                 match(Token.rpt.tag);
@@ -196,7 +197,7 @@ public class Parser
             match(Token.rpq.tag);
             assignlistp();
         }
-        else if(look.tag==Word.end.tag || look.tag==Tag.EOF || look.tag==Token.rpg.tag)
+        else if(look.tag==Word.end.tag || look.tag==Tag.EOF || look.tag==Token.rpg.tag || look.tag==Token.semicolon.tag)
         {
             
         }
@@ -302,7 +303,12 @@ public class Parser
 	private void exprlistp()
     {
         if(look.tag==Token.comma.tag)
+        {
             match(Token.comma.tag);
+            expr();
+            exprlistp();
+        }
+            
         else if(look.tag==Token.rpt.tag)
         {}
         else 

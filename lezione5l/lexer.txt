@@ -1,1 +1,1 @@
-for(x := 1 ; < 1 2 ) do print(x)
+assign[+(2,3) to x,y]

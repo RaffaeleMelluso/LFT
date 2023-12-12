@@ -2,7 +2,8 @@
 package lezione7l;
 import lezione7l.other.*;
 import java.io.*;
-public class Translator {
+public class Translator 
+{
     private Lexer lex;
     private BufferedReader pbr;
     private Token look;
@@ -36,13 +37,29 @@ public class Translator {
         } 
         else error("syntax error");
     }
-
+    public static void main(String[] args) {
+        Lexer lex = new Lexer();
+        String path = "lezione7l/other/translator.txt"; // il percorso del file da leggere
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(path));
+            Translator parser = new Translator(lex, br);
+            parser.prog();
+            System.out.println("Input OK");
+            br.close();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            
+        }
+    }
     public void prog() {        
     if(look.tag==Word.assign.tag || look.tag==Word.print.tag || look.tag==Word.read.tag || 
        look.tag==Word.fortok.tag || look.tag==Word.iftok.tag || look.tag==Token.lpg.tag)
     {
         int lnext_prog = code.newLabel();
         statlist(lnext_prog);
+        code.emit(OpCode.GOto,lnext_prog);
         code.emitLabel(lnext_prog);
         match(Tag.EOF);
         try {
@@ -95,7 +112,8 @@ public class Translator {
             case Tag.ASSIGN:
                 lnext_prog = code.newLabel();
                 match(Word.assign.tag);
-                assignlist();
+                assignlist(lnext_prog);
+                code.emitLabel(lnext_prog);
                 break;
             case Tag.PRINT:
                 lnext_prog = code.newLabel();
@@ -103,33 +121,46 @@ public class Translator {
                 match(Token.lpt.tag);
                 exprlist();
                 match(Token.rpt.tag);
+                code.emit(OpCode.invokestatic,1); 
+                code.emit(OpCode.GOto,lnext_prog);
+                code.emitLabel(lnext_prog);
                 break;
             case Tag.READ:
                 lnext_prog = code.newLabel();
                 match(Tag.READ);
                 match('(');
-	            idlist(/* completare */);
+	            idlist(lnext_prog);
                 match(')');
+                code.emit(OpCode.invokestatic,0);
+
+
+
+                code.emit(OpCode.istore);
+                code.emit(OpCode.GOto,lnext_prog);
+                code.emitLabel(lnext_prog);
+                break;
             
             case Tag.FOR:
                 lnext_prog = code.newLabel();
                 match(Word.fortok.tag);
                 match(Token.lpt.tag);
-                A();
+                
+                A(lnext_prog);
+                
                 break;
             case Tag.IF:
                 lnext_prog = code.newLabel();
                 match(Word.iftok.tag);
                 match(Token.lpt.tag);
-                bexpr();
+                bexpr(lnext_prog);
                 match(Token.rpt.tag);
-                stat();
-                B();
+                stat(lnext_prog);
+                B(lnext_prog);
                 break;
             case '{':
                 lnext_prog = code.newLabel();
                 match(Token.lpg.tag);
-                statlist();
+                statlist(lnext_prog);
                 match(Token.rpg.tag);
                 break;
 
@@ -144,21 +175,27 @@ public class Translator {
          switch (look.tag) {
              case Tag.ID:
                  
-                 match(Tag.ID);
+                int id_addr = st.lookupAddress(((Word)look).lexeme);
+                if (id_addr==-1) {
+                    id_addr = count;
+                    st.insert(((Word)look).lexeme,count++);
+                }
+                code.emit(OpCode.iload,id_addr);
+                match(Tag.ID);
                  match(Word.init.tag);
                  expr();
                  match(Token.semicolon.tag);
-                 bexpr();
+                 bexpr(lnext_prog);
                  match(Token.rpt.tag);
                  match(Word.dotok.tag);
-                 stat();
+                 stat(lnext_prog);
                  break;
              case Tag.RELOP:
                  
-                 bexpr();
+                 bexpr(lnext_prog);
                  match(Token.rpt.tag);
                  match(Word.dotok.tag);
-                 stat();
+                 stat(lnext_prog);
                  break;
              default:
                  error("No such guide for stat");
@@ -171,7 +208,7 @@ public class Translator {
          {
              
              match(Word.elsetok.tag);
-             stat();
+             stat(lnext_prog);
              match(Word.end.tag);
          }
          else if(look.tag==Word.end.tag){
@@ -183,16 +220,52 @@ public class Translator {
                  
              
      }
+     private void assignlist(int lnext_prog) 
+     {
+         if(look.tag==Token.lpq.tag)
+         {
+             match(Token.lpq.tag);
+             expr();
+             match(Word.to.tag);
+             idlist(lnext_prog);
+             match(Token.rpq.tag);
+             assignlistp(lnext_prog);
+             code.emit(OpCode.GOto, lnext_prog);
+         }
+         else
+             error("No such guide for assignlist");
+         
+     }
+    private void assignlistp(int lnext_prog)
+    {
+        if(look.tag==Token.lpq.tag)
+        {
+            match(Token.lpq.tag);
+            expr();
+            match(Word.to.tag);
+            idlist(lnext_prog);
+            match(Token.rpq.tag);
+            assignlistp(lnext_prog);
+        }
+        else if(look.tag==Word.end.tag || look.tag==Tag.EOF || look.tag==Token.rpg.tag || look.tag==Token.semicolon.tag)
+        {
+            
+        }
+        else
+            error("No such guide for assignlistp");
+    }
     private void idlist(int lnext_prog) {
         switch(look.tag) {
 	    case Tag.ID:
-            
         	int id_addr = st.lookupAddress(((Word)look).lexeme);
                 if (id_addr==-1) {
                     id_addr = count;
                     st.insert(((Word)look).lexeme,count++);
                 }
+                code.emit(OpCode.istore,id_addr);
                 match(Tag.ID);
+                idlistp(lnext_prog);
+        break;
         default:
             error("No such guide for idlist");
         
@@ -202,10 +275,17 @@ public class Translator {
     {
         if(look.tag==Token.comma.tag)
         {
-           
+            
             match(Token.comma.tag);
+
+            int id_addr = st.lookupAddress(((Word)look).lexeme);
+                if (id_addr==-1) {
+                    id_addr = count;
+                    st.insert(((Word)look).lexeme,count++);
+                }
+            code.emit(OpCode.istore,id_addr);
             match(Tag.ID);
-            idlistp();
+            idlistp(lnext_prog);
         }
         else if(look.tag==Token.rpq.tag || look.tag==Token.rpt.tag)
         {
@@ -227,40 +307,49 @@ public class Translator {
             error("No such guide for bexpr");
     }
 
-    private void expr( int lnext_prog ) {
+    private void expr() {
         switch(look.tag) {
             case '+':
-                
-                match(Token.plus.tag);
-                match(Token.lpt.tag);
-                exprlist();
-                match(Token.rpt.tag);
+            match(Token.plus.tag);
+            match(Token.lpt.tag);
+            exprlist();
+            code.emit(OpCode.iadd);
+            match(Token.rpt.tag);
 
-                break;
+            break;
             case '*':
-                
-                match(Token.mult.tag);
-                match(Token.lpt.tag);
-                exprlist();
-                match(Token.rpt.tag);
-                break;
+            match(Token.mult.tag);
+            match(Token.lpt.tag);
+            exprlist();
+            code.emit(OpCode.imul);
+            match(Token.rpt.tag);
+            break;
             case '-':
-                
                 match('-');
                 expr();
                 expr();
                 code.emit(OpCode.isub);
+                
                 break;
             case '/':
                 
                 match(Token.div.tag);
                 expr();
                 expr();
+                code.emit(OpCode.idiv);
                 break;
             case Tag.NUM:
+                code.emit(OpCode.ldc, ((NumberTok)look).lexeme);
                 match(Tag.NUM);
                 break;
             case Tag.ID:
+
+                int id_addr = st.lookupAddress(((Word)look).lexeme);
+                if (id_addr==-1) {
+                    id_addr = count;
+                    st.insert(((Word)look).lexeme,count++);
+                }
+                code.emit(OpCode.iload,id_addr);
                 match(Tag.ID);
                 break;
             default:
@@ -268,7 +357,7 @@ public class Translator {
                 break;
         }
     }
-    private void exprlist(int lnext_prog) 
+    private void exprlist() 
     {
         switch (look.tag) 
         {
@@ -287,13 +376,18 @@ public class Translator {
         }
         
     }
-	private void exprlistp(int lnext_prog)
+	private void exprlistp()
     {
         if(look.tag==Token.comma.tag)
+        {
             match(Token.comma.tag);
+            expr();
+            exprlistp();
+        }
         else if(look.tag==Token.rpt.tag)
         {}
         else 
             error("No such guide for exprlistp");
     }
+    
 }
