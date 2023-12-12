@@ -1,2 +1,1 @@
-assign [10 to x,a]
-[20 to y]
+if( > 2 3) print(1) else print(0) end

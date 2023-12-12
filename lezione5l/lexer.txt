@@ -1,1 +1,1 @@
-assign[+(2,3) to x,y]
+if( > 2 3) print(1) else print(0) end

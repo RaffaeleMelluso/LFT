@@ -113,7 +113,6 @@ public class Lexer {
                 readch(br);
                 if(peek== ' ' || Character.isDigit(peek) || Character.isLetter(peek))
                 {
-                    peek=' ';
                     return Word.gt;
                 }
                     
@@ -248,9 +247,10 @@ public class Lexer {
                 }
          }
     }
+		
     public static void main(String[] args) {
         Lexer lex = new Lexer();
-        String path = "lezione6l/lexer.txt"; // il percorso del file da leggere
+        String path = "lezione7l/other/translator.txt"; // il percorso del file da leggere
         try {
             BufferedReader br = new BufferedReader(new FileReader(path));
             Token tok;
