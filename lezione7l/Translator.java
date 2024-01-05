@@ -79,9 +79,10 @@ public class Translator
         if(look.tag==Word.assign.tag || look.tag==Word.print.tag || look.tag==Word.read.tag || 
             look.tag==Word.fortok.tag || look.tag==Word.iftok.tag || look.tag==Token.lpg.tag)
         {
-           
-           stat(lnext_prog);
-           statlistp(lnext_prog);
+            lnext_prog = code.newLabel(); // viene incrementata l'etichetta
+            stat(lnext_prog);
+            code.emitLabel(lnext_prog);
+            statlistp(lnext_prog);
         }
         else
             error("No such guide for statlist");
@@ -107,60 +108,52 @@ public class Translator
     
     }
     public void stat(int lnext_prog) {
+
+        int loop = code.newLabel();
         switch (look.tag) 
         {
             case Tag.ASSIGN:
-                lnext_prog = code.newLabel();
                 match(Word.assign.tag);
-                assignlist(lnext_prog);
-                code.emitLabel(lnext_prog);
-                break;
+                assignlist();
+                code.emit(OpCode.pop);
+            break;
             case Tag.PRINT:
-                lnext_prog = code.newLabel();
                 match(Word.print.tag);
                 match(Token.lpt.tag);
                 exprlist();
+                code.emit(OpCode.invokestatic, 1);
                 match(Token.rpt.tag);
-                code.emit(OpCode.invokestatic,1); 
-                code.emit(OpCode.GOto,lnext_prog);
-                code.emitLabel(lnext_prog);
                 break;
             case Tag.READ:
-                lnext_prog = code.newLabel();
                 match(Tag.READ);
-                match('(');
-	            idlist(lnext_prog);
-                match(')');
-                code.emit(OpCode.invokestatic,0);
-
-
-
-                code.emit(OpCode.istore);
-                code.emit(OpCode.GOto,lnext_prog);
-                code.emitLabel(lnext_prog);
+                match(Token.lpt.tag);
+	            code.emit(OpCode.invokestatic, 0);// codice 0 read        
+                idlist(0);
+                match(Token.rpt.tag);
+                code.emit(OpCode.pop);
                 break;
             
             case Tag.FOR:
-                lnext_prog = code.newLabel();
                 match(Word.fortok.tag);
                 match(Token.lpt.tag);
-                
-                A(lnext_prog);
-                
+                A(loop);
                 break;
             case Tag.IF:
-                lnext_prog = code.newLabel();
                 match(Word.iftok.tag);
                 match(Token.lpt.tag);
-                bexpr(lnext_prog);
+                int scelta[] = bexpr(loop);
                 match(Token.rpt.tag);
                 stat(lnext_prog);
-                B(lnext_prog);
+                code.emit(OpCode.GOto, lnext_prog);
+                code.emitLabel(scelta[0]);
+                B(loop);
                 break;
             case '{':
-                lnext_prog = code.newLabel();
                 match(Token.lpg.tag);
+                lnext_prog = code.newLabel(); 
                 statlist(lnext_prog);
+                code.emit(OpCode.GOto, lnext_prog);
+                code.emitLabel(lnext_prog);
                 match(Token.rpg.tag);
                 break;
 
@@ -170,8 +163,10 @@ public class Translator
             
         }
      }
-     private void A(int lnext_prog)
+     private void A(int loop)
      {
+        int lnext_prog;
+        int scelta[];
          switch (look.tag) {
              case Tag.ID:
                  
@@ -180,98 +175,112 @@ public class Translator
                     id_addr = count;
                     st.insert(((Word)look).lexeme,count++);
                 }
-                code.emit(OpCode.iload,id_addr);
                 match(Tag.ID);
-                 match(Word.init.tag);
-                 expr();
-                 match(Token.semicolon.tag);
-                 bexpr(lnext_prog);
-                 match(Token.rpt.tag);
-                 match(Word.dotok.tag);
-                 stat(lnext_prog);
-                 break;
+                match(Word.init.tag);
+                expr();
+                match(Token.semicolon.tag);
+                scelta=bexpr(loop);
+                match(Token.rpt.tag);
+                match(Word.dotok.tag);
+                stat(loop);
+                code.emit(OpCode.GOto, loop);
+                code.emitLabel(scelta[0]);
+                break;
              case Tag.RELOP:
-                 
-                 bexpr(lnext_prog);
-                 match(Token.rpt.tag);
-                 match(Word.dotok.tag);
-                 stat(lnext_prog);
-                 break;
+                scelta= bexpr(loop);
+                match(Token.rpt.tag);
+                match(Word.dotok.tag);
+                lnext_prog = code.newLabel();
+                stat(lnext_prog);
+                code.emit(OpCode.GOto, loop);
+                code.emitLabel(scelta[0]);
+                break;
              default:
                  error("No such guide for stat");
                  break;
          }
      }
-     private void B(int lnext_prog)
+     private void B(int loop)
      {
-         if(look.tag== Word.elsetok.tag)
+        if(look.tag== Word.elsetok.tag)
          {
-             
-             match(Word.elsetok.tag);
-             stat(lnext_prog);
-             match(Word.end.tag);
+            match(Word.elsetok.tag);
+            int lnext_prog=code.newLabel();
+            stat(lnext_prog);
+
+            match(Word.end.tag);
          }
-         else if(look.tag==Word.end.tag){
-             
-             match(Word.end.tag);
-         }
-         else
-             error("No such guide for stat");
+        else if(look.tag==Word.end.tag)
+        {
+            match(Word.end.tag);
+        }
+        else
+            error("No such guide for stat");
                  
              
      }
-     private void assignlist(int lnext_prog) 
+     private void assignlist() 
      {
          if(look.tag==Token.lpq.tag)
          {
-             match(Token.lpq.tag);
-             expr();
-             match(Word.to.tag);
-             idlist(lnext_prog);
-             match(Token.rpq.tag);
-             assignlistp(lnext_prog);
-             code.emit(OpCode.GOto, lnext_prog);
+            match(Token.lpq.tag);
+            expr();
+            match(Word.to.tag);
+            idlist(0);
+            match(Token.rpq.tag);
+            assignlistp();
          }
          else
-             error("No such guide for assignlist");
+            error("No such guide for assignlist");
          
      }
-    private void assignlistp(int lnext_prog)
+    private void assignlistp()
     {
         if(look.tag==Token.lpq.tag)
         {
             match(Token.lpq.tag);
             expr();
             match(Word.to.tag);
-            idlist(lnext_prog);
+            idlist(1);
             match(Token.rpq.tag);
-            assignlistp(lnext_prog);
+            assignlistp();
         }
         else if(look.tag==Word.end.tag || look.tag==Tag.EOF || look.tag==Token.rpg.tag || look.tag==Token.semicolon.tag)
-        {
-            
-        }
+        {}
         else
             error("No such guide for assignlistp");
     }
-    private void idlist(int lnext_prog) {
+    private void idlist(int caso) {
         switch(look.tag) {
 	    case Tag.ID:
         	int id_addr = st.lookupAddress(((Word)look).lexeme);
-                if (id_addr==-1) {
-                    id_addr = count;
-                    st.insert(((Word)look).lexeme,count++);
-                }
-                code.emit(OpCode.istore,id_addr);
-                match(Tag.ID);
-                idlistp(lnext_prog);
+            if (id_addr==-1) 
+            {
+                id_addr = count;
+                st.insert(((Word)look).lexeme,count++);
+            }
+            if (caso == 1) {
+    
+                code.emit(OpCode.dup);
+                code.emit(OpCode.istore, id_addr); // qua nuovo indirizzo
+                code.emit(OpCode.dup);
+            }
+            else
+            {
+                code.emit(OpCode.istore, id_addr);
+                caso=1;
+
+            }
+            
+            match(Tag.ID);
+            idlistp(caso);
         break;
         default:
             error("No such guide for idlist");
         
     	}
     }
-    private void idlistp(int lnext_prog)
+    private void idlistp(int caso)
     {
         if(look.tag==Token.comma.tag)
         {
@@ -279,60 +288,110 @@ public class Translator
             match(Token.comma.tag);
 
             int id_addr = st.lookupAddress(((Word)look).lexeme);
-                if (id_addr==-1) {
-                    id_addr = count;
-                    st.insert(((Word)look).lexeme,count++);
-                }
-            code.emit(OpCode.istore,id_addr);
+            if (id_addr==-1) 
+            {
+                id_addr = count;
+                st.insert(((Word)look).lexeme,count++);
+            }
+            if (caso == 1) {
+    
+                code.emit(OpCode.dup);
+                code.emit(OpCode.istore, id_addr); // qua nuovo indirizzo
+
+            }
+            else
+            {
+                code.emit(OpCode.pop);
+                code.emit(OpCode.invokestatic, caso);
+                code.emit(OpCode.dup);
+                code.emit(OpCode.istore, id_addr);
+            }
             match(Tag.ID);
-            idlistp(lnext_prog);
+            idlistp(caso);
         }
         else if(look.tag==Token.rpq.tag || look.tag==Token.rpt.tag)
-        {
-            
-        }
+        {}
         else
             error("No such guide for idlistp");
     }
-    private void bexpr(int lnext_prog)
+    private int[] bexpr(int loop)
     {
+        int [] scelta = new int[2];
+        String relop = ((Word)look).lexeme;
         if(look.tag==Tag.RELOP)
         {
             
             match(Tag.RELOP);
-            expr();
-            expr();
+            int id_add_true=expr();
+            int id_add_false=expr();
+            scelta[0] = id_add_false;
+            scelta[1] = id_add_true;
+            code.emitLabel(loop);
+            switch(relop) 
+            {
+    
+                case ">":
+                code.emit(OpCode.if_icmpgt, id_add_true);
+                break;
+    
+                case "<":               
+                code.emit(OpCode.if_icmplt, id_add_true);
+                break;
+    
+                case ">=":
+                code.emit(OpCode.if_icmpge, id_add_true);
+                break;
+
+                case "<=":
+                code.emit(OpCode.if_icmplt, id_add_true);
+                break;
+
+                case "<>":
+                code.emit(OpCode.if_icmpne, id_add_true);
+                break;
+
+                case "==":
+                code.emit(OpCode.if_icmpeq, id_add_true);
+                break;
+
+                default: 
+                break;
+            }
+            code.emit(OpCode.GOto, id_add_false);
+            code.emitLabel(id_add_true);
+            
+
         }
         else
             error("No such guide for bexpr");
+
+        return scelta;
     }
 
-    private void expr() {
+    private int expr() {
+        int lnext_prog = code.newLabel();
         switch(look.tag) {
             case '+':
-            match(Token.plus.tag);
-            match(Token.lpt.tag);
-            exprlist();
-            code.emit(OpCode.iadd);
-            match(Token.rpt.tag);
-
-            break;
+                match(Token.plus.tag);
+                match(Token.lpt.tag);
+                exprlist();
+                code.emit(OpCode.iadd);
+                match(Token.rpt.tag);
+                break;
             case '*':
-            match(Token.mult.tag);
-            match(Token.lpt.tag);
-            exprlist();
-            code.emit(OpCode.imul);
-            match(Token.rpt.tag);
-            break;
+                match(Token.mult.tag);
+                match(Token.lpt.tag);
+                exprlist();
+                code.emit(OpCode.imul);
+                match(Token.rpt.tag);
+                break;
             case '-':
-                match('-');
+                match(Token.minus.tag);
                 expr();
                 expr();
                 code.emit(OpCode.isub);
-                
                 break;
-            case '/':
-                
+            case '/': 
                 match(Token.div.tag);
                 expr();
                 expr();
@@ -343,9 +402,9 @@ public class Translator
                 match(Tag.NUM);
                 break;
             case Tag.ID:
-
                 int id_addr = st.lookupAddress(((Word)look).lexeme);
-                if (id_addr==-1) {
+                if (id_addr==-1) 
+                {
                     id_addr = count;
                     st.insert(((Word)look).lexeme,count++);
                 }
@@ -356,6 +415,7 @@ public class Translator
                 error("No such guide for expr");
                 break;
         }
+        return lnext_prog;
     }
     private void exprlist() 
     {
