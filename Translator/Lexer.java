@@ -1,4 +1,4 @@
-package lezione7l.other;
+
 
 import java.io.*; 
 import java.util.*;
@@ -250,7 +250,7 @@ public class Lexer {
 		
     public static void main(String[] args) {
         Lexer lex = new Lexer();
-        String path = "lezione7l/other/translator.txt"; // il percorso del file da leggere
+        String path = "translator.txt"; // il percorso del file da leggere
         try {
             BufferedReader br = new BufferedReader(new FileReader(path));
             Token tok;

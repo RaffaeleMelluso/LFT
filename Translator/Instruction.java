@@ -1,5 +1,3 @@
-package lezione7l;
-
 public class Instruction {
     OpCode opCode;
     int operand;

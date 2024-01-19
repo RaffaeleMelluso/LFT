@@ -1,4 +1,4 @@
-package lezione7l.other;
+
 public class NumberTok extends Token {
 	public int lexeme = 0;
     public NumberTok(int tag, int i) { super(tag); lexeme=i; }

@@ -1,6 +1,4 @@
 //Esercizio 5.1
-package lezione7l;
-import lezione7l.other.*;
 import java.io.*;
 public class Translator 
 {
@@ -39,7 +37,7 @@ public class Translator
     }
     public static void main(String[] args) {
         Lexer lex = new Lexer();
-        String path = "lezione7l/other/translator.txt"; // il percorso del file da leggere
+        String path = "translator.txt"; // il percorso del file da leggere
         try {
             BufferedReader br = new BufferedReader(new FileReader(path));
             Translator parser = new Translator(lex, br);

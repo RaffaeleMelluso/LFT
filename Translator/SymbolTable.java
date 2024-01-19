@@ -1,5 +1,3 @@
-package lezione7l;
-
 import java.util.*;
 
 public class SymbolTable {

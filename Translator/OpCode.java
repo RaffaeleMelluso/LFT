@@ -1,5 +1,3 @@
-package lezione7l;
-
 public enum OpCode { 
     ldc, imul, ineg, idiv, iadd, 
     isub, istore, ior, iand, iload,

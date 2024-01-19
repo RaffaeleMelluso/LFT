@@ -1,4 +1,3 @@
-package lezione7l;
 import java.util.LinkedList;
 import java.io.*;
 
