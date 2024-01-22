@@ -37,7 +37,7 @@ public class Translator
     }
     public static void main(String[] args) {
         Lexer lex = new Lexer();
-        String path = "translator.txt"; // il percorso del file da leggere
+        String path = "Translator/translator.txt"; // il percorso del file da leggere
         try {
             BufferedReader br = new BufferedReader(new FileReader(path));
             Translator parser = new Translator(lex, br);
@@ -194,7 +194,7 @@ public class Translator
                 code.emitLabel(scelta[0]);
                 break;
              default:
-                 error("No such guide for stat");
+                 error("No such guide for stat, fortok");
                  break;
          }
      }
@@ -265,6 +265,7 @@ public class Translator
             }
             else
             {
+                code.emit(OpCode.dup);
                 code.emit(OpCode.istore, id_addr);
                 caso=1;
 
